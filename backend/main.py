@@ -51,10 +51,19 @@ def log_interaction(
     print(f"🛠️ [TOOL] log_interaction triggered! Samples requested: {samples_requested}")
     return f"Successfully committed interaction log to DB for HCP ID {hcp_id}."
 
+# THE FIX: Strongly typed parameters prevent the LLM from hallucinating nested JSON
 @tool
-def edit_interaction(interaction_id: int, field_to_update: str, new_value: Any) -> str:
-    """Mandatory Tool 2: Modifies an existing log parameter to correct errors or update facts."""
-    return f"Successfully updated {field_to_update} to '{new_value}' for interaction {interaction_id}."
+def edit_interaction(
+    interaction_id: int = 12345, 
+    hcp_id: Optional[int] = None, 
+    interaction_type: Optional[str] = None, 
+    drugs_detailed: Optional[List[str]] = None, 
+    samples_requested: Optional[int] = None, 
+    summary: Optional[str] = None
+) -> str:
+    """Mandatory Tool 2: Modifies an existing log parameter to correct errors or update facts.
+    CRITICAL INSTRUCTION: Only pass the specific fields that need to be updated. Do NOT pass nested JSON."""
+    return f"Successfully updated interaction {interaction_id}."
 
 @tool
 def get_hcp_profile(name: str) -> str:
@@ -80,13 +89,10 @@ async def agent_node(state: AgentState):
     print(f"🧠 [AGENT] Thinking... (Reading {len(messages)} messages)")
     
     # THE ULTIMATE FIX: The Tool Stripper
-    # If the absolute last thing that happened was a successful tool execution...
     if len(messages) > 0 and isinstance(messages[-1], ToolMessage):
         print("🛡️ [GUARDRAIL] Tool just finished. Stripping tools from AI to force a text reply.")
-        # We invoke the raw 'llm' WITHOUT tools bound. It CANNOT loop anymore.
         response = await llm.ainvoke(messages)
     else:
-        # Otherwise, let it use tools normally
         response = await llm_with_tools.ainvoke(messages)
         
     print(f"🗣️ [AGENT] Replied! Did it use a tool? {hasattr(response, 'tool_calls') and bool(response.tool_calls)}")
@@ -145,8 +151,10 @@ async def handle_agent_chat(request: ChatRequest):
             elif isinstance(m, AIMessage):
                 out_messages.append({"role": "assistant", "content": m.content, "tool_calls": getattr(m, 'tool_calls', [])})
                 for tc in getattr(m, 'tool_calls', []):
-                    if tc["name"] == "log_interaction":
-                        extracted = tc["args"]
+                    # THE FIX: Now we listen for BOTH log and edit tools!
+                    if tc["name"] in ["log_interaction", "edit_interaction"]:
+                        # We only extract fields that actually have data so we don't overwrite your form with blanks
+                        extracted = {k: v for k, v in tc["args"].items() if v is not None}
             elif isinstance(m, ToolMessage):
                 out_messages.append({"role": "tool", "content": m.content, "tool_call_id": m.tool_call_id})
                 
