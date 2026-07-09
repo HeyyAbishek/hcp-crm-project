@@ -44,11 +44,35 @@ The agent is equipped with five specific tools mapped to life science compliance
    * **Purpose:** Mitigates compliance risks under drug distribution regulations by verifying available allocations before a rep promises physical samples to a physician.
 5. **`schedule_follow_up`**
    * **Purpose:** Automates calendar entry creation by identifying dates and intent markers within natural conversation, dropping actionable tasks into the rep's pipeline.
+     
 
 ---
 
 ### 📝 Technical Note on LLM Selection
 *Note: The original project specification requested the use of Groq's `gemma2-9b-it` model. However, during development, Groq's API returned a `400 Model Decommissioned` status for that specific endpoint. To ensure a stable, functional prototype, the architecture was dynamically adapted to utilize Groq's active `llama-3.1-8b-instant` model. The LangGraph tool-binding and extraction logic remains model-agnostic.*
+
+## 💻 Local Setup Instructions
+
+Repository: https://github.com/HeyyAbishek/hcp-crm-project
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/HeyyAbishek/hcp-crm-project.git
+cd hcp-crm-project
+```
+2. Start the Backend (FastAPI)
+```bash
+cd backend
+python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+```
+3. Start the Frontend (React/Vite)
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
 
 ## 🗄️ Database Schema (MySQL / PostgreSQL)
 The backend tools map the AI's extracted JSON parameters into the following relational structure:
