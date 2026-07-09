@@ -47,6 +47,9 @@ The agent is equipped with five specific tools mapped to life science compliance
 
 ---
 
+### 📝 Technical Note on LLM Selection
+*Note: The original project specification requested the use of Groq's `gemma2-9b-it` model. However, during development, Groq's API returned a `400 Model Decommissioned` status for that specific endpoint. To ensure a stable, functional prototype, the architecture was dynamically adapted to utilize Groq's active `llama-3.1-8b-instant` model. The LangGraph tool-binding and extraction logic remains model-agnostic.*
+
 ## 🗄️ Database Schema (MySQL / PostgreSQL)
 The backend tools map the AI's extracted JSON parameters into the following relational structure:
 
